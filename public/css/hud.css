@@ -1,0 +1,35 @@
+/* build 0174 (Lee, Nov 21: "upgrade the bottom UI with the heal and spirit globe ... redesigned and look more gamer professional"; of four looks tried, Lee let Claude pick: arc gauges).
+   The life and resource globes become arc gauges: a 270 degree ring around a big number, brightening toward its tip, with a pale trail on the ring
+   where life or resource was just lost. ui.js gives each gauge --f (how full, 0 to 1), --gh (the trail, 0 to 1), the class's resource colours
+   (--rcL, --rcM, --rcD) and the class "low" on the life gauge under 30%. ui.js adds body.hudB at start; without it the old globes show. */
+
+.globe .gtrail{display:none}
+.globe .txt b{font-weight:inherit}
+.globe .txt i{font-style:normal}
+#gLife .txt i::before{content:"\00a0/\00a0"}
+#gFury .txt i::before{content:"\00a0"}
+#gLife{--c1:#ff6a6e;--c2:#d4202c;--c3:#5e070d}
+#gFury{--c1:var(--rcL,#ffd070);--c2:var(--rcM,#e07a14);--c3:var(--rcD,#7a3204)}
+
+body.hudB .globe{--gs:96px;--rt:9px;border:0;border-radius:50%;overflow:visible;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--c3) 55%,#0b0c10),#060709 70%);box-shadow:0 0 0 1px rgba(255,255,255,.1),0 10px 24px rgba(0,0,0,.7)}
+@media (max-width:760px){body.hudB .globe{--gs:62px;--rt:6px}}
+body.hudB:not(.tj) .globe{width:var(--gs);height:var(--gs)}
+body.tj.hudB .globe{--rt:6px}
+body.hudB .globe .fill,body.hudB .globe .gtrail{display:none}
+/* the ring: the track with the pale "just lost" trail underneath, the coloured arc on top */
+body.hudB .globe::before,body.hudB .globe::after{content:"";position:absolute;inset:3px;border-radius:50%;pointer-events:none;z-index:2;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - var(--rt)),#000 calc(100% - var(--rt) + .5px));mask:radial-gradient(farthest-side,transparent calc(100% - var(--rt)),#000 calc(100% - var(--rt) + .5px))}
+body.hudB .globe::before{background:conic-gradient(from 225deg,rgba(255,238,220,.6) 0 calc(var(--gh,1) * 270deg),rgba(255,255,255,.09) 0 270deg,transparent 0)}
+body.hudB .globe::after{background:conic-gradient(from 225deg,var(--c3) 0deg,var(--c2) calc(var(--f,1) * 150deg),var(--c1) calc(var(--f,1) * 270deg),transparent 0);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--c2) 70%,transparent))}
+/* the readout: a big number, the maximum or the resource name underneath */
+body.hudB .globe .txt{z-index:4;flex-direction:column;line-height:1;gap:5px;font-family:Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.95),0 0 6px rgba(0,0,0,.6)}
+body.hudB .globe .txt b{font-size:22px;font-weight:700;letter-spacing:.01em;color:#fff}
+body.hudB .globe .txt i{font-size:8.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.66)}
+body.hudB #gLife .txt i::before{content:"of\00a0"}
+body.hudB #gFury .txt i::before{content:none}
+body.tj.hudB .globe .txt{gap:3px}
+body.tj.hudB .globe .txt b{font-size:14px}
+body.tj.hudB .globe .txt i{font-size:7px;letter-spacing:.1em}
+/* under 30% life the life gauge pulses red */
+@keyframes hudLow{50%{filter:drop-shadow(0 0 10px rgba(255,40,40,.85)) brightness(1.15)}}
+body.hudB #gLife.low{animation:hudLow 1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){body.hudB #gLife.low{animation:none;filter:drop-shadow(0 0 8px rgba(255,40,40,.8))}}

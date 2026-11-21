@@ -267,7 +267,7 @@ function forgeBox(it) { const F = G.lastForge; if (!F || F.it !== it) return '';
   // ---- hud ----
   const USE_LABEL = { planner: 'Plan', chest: 'Open', shrine: 'Touch', stash: 'Stash', vendor: 'Trade', altar: 'Altar', tportal: 'Leave', portal: 'Enter', npc: 'Talk', lost: 'Help', rift: 'Rift', atlas: 'Atlas' };
   function buildBar() {
-    const bar = $('bar'), cls = CLASSES[G.hero.cls]; bar.innerHTML = ''; skEls = []; $('gFury').firstElementChild.style.background = cls.res.c;
+    const bar = $('bar'), cls = CLASSES[G.hero.cls]; bar.innerHTML = ''; skEls = []; $('gFury').firstElementChild.style.background = cls.res.c; { const m = cls.res.c.match(/#[0-9a-f]{6}/gi) || [], g = $('gFury'); if (m.length >= 3) { g.style.setProperty('--rcL', m[0]); g.style.setProperty('--rcM', m[1]); g.style.setProperty('--rcD', m[2]); } } /* build 0174: the class colour as plain colours for the arc gauge */
     for (let i = 0; i < 5; i++) {
       const sid = i < 4 ? (i === 0 && !G.hero.eq.weapon ? 'punch' : G.hero.bar[i]) : null, GI = typeof ICONS !== 'undefined' ? ICONS : null, ico = GI ? (i === 4 ? GI.ui('potion', 'blood') : sid && SKILLS[sid] ? GI.skill(sid) : GI.ui('empty', 'dim')) : ''; /* build 0047: high-res icons */
       const sk = i < 4 ? (talSk(sid) || { i: '＋', n: 'Empty slot', d: 'Open Skills to choose a skill for this slot.' }) : { i: '✚', n: 'Health Potion', d: 'Restores ' + Math.round(60 * (1 + .2 * townLv('garden'))) + '% of your life. Holds up to ' + flaskMax() + '; one refills every ' + FLASK_CD + ' seconds.' }; const d = document.createElement('div'); d.className = 'sk'; d.style.pointerEvents = 'auto';
@@ -481,12 +481,17 @@ function forgeBox(it) { const F = G.lastForge; if (!F || F.it !== it) return '';
     for (const id of ['onl', 'party']) { const el = $(id); if (!el) continue; if (el.classList.contains('hide')) continue; const cs = getComputedStyle(el); if (cs.right === 'auto' || cs.position !== 'fixed') continue; el.style.top = Math.round(y + 4) + 'px'; const r = el.getBoundingClientRect(); if (r.height) y = r.bottom; }
     { const tb = $('tbtns'); if (tb) { tb.style.removeProperty('top'); if (isPhone() && innerHeight > innerWidth && document.body.classList.contains('tj')) { const t0 = parseFloat(getComputedStyle(tb).top) || 0; if (y + 8 > t0) tb.style.setProperty('top', Math.round(y + 8) + 'px', 'important'); } } } /* build 0161: on a phone the side buttons move down when the open quest box or party list reaches them */
     const sk = $('streak'); if (sk) { const cs = getComputedStyle(sk); sk.style.top = ''; if (cs.right !== 'auto' && parseFloat(getComputedStyle(sk).top) < y + 8 && sk.getBoundingClientRect().left > innerWidth * .6) sk.style.top = Math.round(y + 8) + 'px'; } }
+  /* build 0174 (Lee, Nov 21): each gauge gets --f (how full) and --gh, a pale trail that waits half a second after a hit and then drains down to the new value, for the arc gauges in css/hud.css.
+     The number and label are separate (<b> and <i>) so each look can place them; the current look still reads "123 / 172" and "40 Fury" */
+  function gauge(el, f, txt, dt) { el.firstElementChild.style.height = f * 100 + '%'; el.style.setProperty('--f', f.toFixed(4)); const d = dt || .016;
+    if (el._gh == null || f >= el._gh) { el._gh = f; el._hold = 0; } else { if (el._lf != null && f < el._lf - 1e-4) el._hold = .5; if (el._hold > 0) el._hold -= d; else el._gh = Math.max(f, el._gh - d * .55); }
+    el._lf = f; el.style.setProperty('--gh', el._gh.toFixed(4)); if (el._t !== txt) { el._t = txt; el.lastElementChild.innerHTML = txt; } }
   function hud(dt) {
     stackRight(dt); placeMute(dt); talDot(dt);
     { const b = G.boss; if (b && b.alive && b.bd && b.bd.phaseLines) { const ph = b.hp > b.maxHp * .66 ? 0 : b.hp > b.maxHp * .33 ? 1 : 2; if (ph > (b.phShown || 0)) { b.phShown = ph; const L = b.bd.phaseLines[ph]; if (L) { U.zoneBanner(L[0], L[1]); SFX.play('boss'); } } } } /* build 0074: Vaeloth's phases are announced */ { const b = G.wboss && G.wboss.alive ? G.wboss : G.boss; if (b && b.alive && b.bd && b.bd.sig && !b.p2Shown && b.hp < b.maxHp * .5) { b.p2Shown = 1; U.zoneBanner(b.bd.n + ' is enraged', 'It adds a new move and attacks faster'); SFX.play('boss'); } } /* build 0089 */
     const h = G.hero, s = P.stats, cls = CLASSES[h.cls];
-    $('gLife').firstElementChild.style.height = clamp(P.hp / s.maxLife * 100, 0, 100) + '%'; $('gLife').lastElementChild.textContent = Math.ceil(P.hp) + ' / ' + s.maxLife;
-    $('gFury').firstElementChild.style.height = clamp(P.mana / s.maxMana * 100, 0, 100) + '%'; $('gFury').lastElementChild.textContent = Math.floor(P.mana) + ' ' + cls.res.n;
+    { const fl = clamp(P.hp / s.maxLife, 0, 1); gauge($('gLife'), fl, '<b>' + Math.ceil(P.hp) + '</b><i>' + s.maxLife + '</i>', dt); $('gLife').classList.toggle('low', !P.dead && fl < .3); }
+    gauge($('gFury'), clamp(P.mana / s.maxMana, 0, 1), '<b>' + Math.floor(P.mana) + '</b><i>' + cls.res.n + '</i>', dt);
     for (let i = 0; i < 5; i++) {
       const el = skEls[i]; if (!el) continue; let cd = 0, max = 1, lock = false, dim = false;
       if (i < 4) { const id = h.bar[i], sk = id && talSk(id); if (sk) { cd = P.cds[id] || 0; max = sk.cd || 1; dim = P.mana < (sk.cost || 0); } else lock = true; } else { const fl = P.fl === undefined ? flaskMax() : P.fl; cd = fl < flaskMax() ? P.flaskCd || 0 : 0; max = 15; dim = fl <= 0; if (el.dataset.fl !== '' + fl) { el.dataset.fl = fl; let c = el.querySelector('.cost'); if (!c) { c = document.createElement('span'); c.className = 'cost'; el.appendChild(c); } c.textContent = '×' + fl; } }
@@ -789,6 +794,7 @@ function forgeBox(it) { const F = G.lastForge; if (!F || F.it !== it) return '';
      when the boss bar would touch the top-left block it drops to just below it. Phones and the touch layout have their own place for the bar and are left alone. */
   setInterval(() => { const bb = $('bossbar'), tp = $('top'); if (!bb || !tp) return; if (bb.style.top) bb.style.top = ''; if (G.state !== 'play' || bb.classList.contains('hide') || document.body.classList.contains('tj') || (window.matchMedia && matchMedia('(pointer:coarse)').matches)) return;
     const a = bb.getBoundingClientRect(), b = tp.getBoundingClientRect(); if (a.width && b.width && a.left < b.right + 12 && a.top < b.bottom + 4) bb.style.top = Math.round(b.bottom + 8) + 'px'; }, 500);
+  document.body.classList.add('hudB'); /* build 0174: the arc gauges (css/hud.css) */
   $('build').textContent = 'Build ' + BUILD; document.title = 'OathByte · build ' + BUILD;
   // build 0073 (Lee): "Build 0073 · updated 12 min ago", timed by the server, so it is right on every device, and it ticks up while the page is open
   { let upAt = null; const ago = ms => { const m = Math.floor(ms / 60000); if (m < 1) return 'just now'; if (m < 60) return m + ' min ago'; const h = Math.floor(m / 60); if (h < 48) return h + (h === 1 ? ' hour ago' : ' hours ago'); const d = Math.floor(h / 24); return d + ' days ago'; };
