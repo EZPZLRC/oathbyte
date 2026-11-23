@@ -393,11 +393,16 @@ function lootFan(x, z, i, n) { const toP = typeof P !== 'undefined' && isFinite(
   for (const R of [R0, R0 - .6, R0 + .8, 3.4, 3]) for (const da of [0, .35, -.35, .8, -.8, 1.4, -1.4, 2.2, -2.2, 3.14]) { const a = a0 + da, px = x + Math.cos(a) * R, pz = z + Math.sin(a) * R; if (!blocked(px, pz, .4) && los(x, z, px, pz)) return [px, pz]; } return null; }
 const DROP_MOB = .03, DRY_MAX = 20; /* build 0034 (Lee, Nov 14): loot is scarcer so each drop matters. Plain monsters 9% -> 3% and the dry-spell guarantee 14 -> 20 kills, which halves what plain monsters drop. Champions, guardians, goblins, vaults and wells stay the big loot moments */
 /* build 0096 (Lee: "make the teleporter for the next level spawn away from the loot"): a guardian's loot fans out toward you, so the gate opens on the far side of where it fell,
-   about 7 m out on open ground in sight of the spot, at least 7 m from every drop. If nothing is that clear it takes the open spot farthest from the loot */
-function gatePlace(x, z) { const toP = isFinite(P.x) ? Math.atan2(P.z - z, P.x - x) : 0, away = toP + Math.PI; let best = null, bs = -1;
+   about 7 m out on open ground in sight of the spot, at least 7 m from every drop. If nothing is that clear it takes the open spot farthest from the loot.
+   Build 0175 (play test: the floor-3 gate could land where the hero could not reach it, so the click never fired): a gate only opens on ground the hero can
+   actually walk to. Each candidate must be open on the walk grid and reachable by the pathfinder; if no ring spot works, the gate opens beside the hero. */
+function gatePlace(x, z) { const toP = isFinite(P.x) ? Math.atan2(P.z - z, P.x - x) : 0, away = toP + Math.PI, cands = [];
+  const open = (gx, gz) => { navGrid(); const S = NAV.S, W = NAV.W, gi = clamp(Math.floor(gz * S), 0, W - 1) * W + clamp(Math.floor(gx * S), 0, W - 1); return !NAV.g[gi]; };
   for (const R of [7, 8, 6, 9, 5]) for (const off of [0, .35, -.35, .7, -.7, 1.05, -1.05, 1.4, -1.4, 1.75, -1.75]) { const a = away + off, gx = x + Math.cos(a) * R, gz = z + Math.sin(a) * R;
-    if (blocked(gx, gz, 1.6) || !los(x, z, gx, gz)) continue; let md = 99; for (const d of G.drops) md = Math.min(md, Math.hypot(d.x - gx, d.z - gz)); if (md >= 7) return [gx, gz]; if (md > bs) { bs = md; best = [gx, gz]; } }
-  return best || [x, z]; }
+    if (blocked(gx, gz, 1.6) || !los(x, z, gx, gz) || !open(gx, gz)) continue; let md = 99; for (const d of G.drops) md = Math.min(md, Math.hypot(d.x - gx, d.z - gz)); cands.push([md, gx, gz]); }
+  cands.sort((a, b) => ((b[0] >= 7) - (a[0] >= 7)) || b[0] - a[0]);
+  for (const c of cands) if (navFind(c[1], c[2])) return [c[1], c[2]];
+  return [P.x, P.z]; }
 function dropLoot(e) {
   const lv = Math.max(e.lvl, G.hero.level), x = e.x, z = e.z; let n = 0, bonus = 0, minR = 0;
   if (e.boss) { n = 5; bonus = 3; minR = 2; } else if (e.elite === 2) { n = 2; bonus = 1.5; minR = 2; } else if (e.elite === 1) { n = 1 + (Math.random() < .5 ? 1 : 0); bonus = .8; minR = 2; } /* build 0027: a champion's first item is always rare or better */ else if (e.arch === 'goblin') { n = 4; bonus = 2; minR = 2; for (let i = 0; i < 8; i++) dropGold(x, z, (15 + lv * 7) * rnd(.8, 1.3)); if (Math.random() < .2) dropItem(x, z, makeItem(lv, null, 3)); if (typeof UI !== 'undefined') UI.zoneBanner('Treasure Goblin caught!', 'Its whole sack spills out for you'); } else if (Math.random() < DROP_MOB || (G.dry || 0) >= DRY_MAX) n = 1; /* Lee, Nov 13: a guaranteed item after a dry spell (14 kills then, 20 since build 0034) */ G.dry = n ? 0 : (G.dry || 0) + 1;
@@ -1427,6 +1432,7 @@ function botStep(dt) {
   const h = G.hero, s = P.stats; BOT.t -= dt; if (G.set.apPot !== false && P.hp < s.maxLife * .45) useFlask();
   for (const a of G.areas) if (a.owner === 'e' && !a.done && inArea(a, P.x, P.z, .8)) { const o = areaOut(a, P.x, P.z); P.atk = null; P.move = [P.x + o[0] * 4, P.z + o[1] * 4]; BOT.dodge = .2; if (a.hvy && a.delay - a.t < .45 && !(P.dodgeCd > 0)) dodge(P.x + o[0] * 4, P.z + o[1] * 4); return false; }
   if (BOT.dodge > 0) { BOT.dodge -= dt; return false; }
+  if (G.gateCd && G.gateCd.cdT > 0) { P.move = null; return false; } /* build 0175: while the gate counts down, stand still so the countdown is not broken by chasing a respawn */
   let tgt = null, bd = 17, goal = null, act = null; for (const e of G.ents) { if (!e.alive || !e.awake || e.dummy) continue; const d = Math.hypot(e.x - P.x, e.z - P.z); if (d < bd) { bd = d; tgt = e; } }
   /* build 0153 (Lee: "Yes, fixes 1 to 3"; play test: auto-play walked away from the world boss at 23% and again at 4%, off to a shrine): once auto-play is fighting a boss
      it stays on that boss until it dies, even when the boss charges off or steps back out of the usual 17 range, and it picks up no loot and uses no shrine meanwhile */
@@ -1456,8 +1462,11 @@ function botStep(dt) {
     BOT.t = .35; const f = botField();
     /* build 0153 (same play test: with the world boss up, auto-play went to it instead of the floor's guardian, The Rootmother): with nothing to fight close by it now heads for
        the floor's own guardian, the quest target, while it lives. It never walks off to find the world boss; it still fights it when the world boss comes to it */
+    /* build 0175 (play test: auto-play looped on respawns and never took a gate): when the quest itself leads through the gate, the gate comes first.
+       Enemies close by are still fought first (the search above), so this only stops the long walks off to distant respawns. */
+    if (!goal) { const po = G.zone.objs.find(o => o.kind === 'portal' && !o.used), q = typeof questTarget === 'function' ? questTarget() : null; if (po && q && Math.hypot(q.x - po.x, q.z - po.z) < 1) { goal = [po.x, po.z]; act = () => { interact(po); }; } }
     if (!goal) { const fb = G.ents.find(e => e.alive && e.boss && !e.wb && !e.dummy && f.dist[cellOf(e.x, e.z)] >= 0); if (fb) goal = [fb.x, fb.z]; }
-    if (!goal) { let bdist = 1e9, be = null; for (const e of G.ents) { if (!e.alive || e.dummy || e.wb) continue; const dc = f.dist[cellOf(e.x, e.z)]; if (dc >= 0 && dc < bdist) { bdist = dc; be = e; } } if (be) goal = [be.x, be.z]; else { const po = G.zone.objs.find(o => o.kind === 'portal' && !o.used); if (po) { goal = [po.x, po.z]; act = () => { po.gone = true; interact(po); }; } } }
+    if (!goal) { let bdist = 1e9, be = null; for (const e of G.ents) { if (!e.alive || e.dummy || e.wb) continue; const dc = f.dist[cellOf(e.x, e.z)]; if (dc >= 0 && dc < bdist) { bdist = dc; be = e; } } if (be) goal = [be.x, be.z]; else { const po = G.zone.objs.find(o => o.kind === 'portal' && !o.used); if (po) { goal = [po.x, po.z]; act = () => { interact(po); }; } } }
     if (!goal) { BOT.path = null; return false; }
     const g = cellOf(goal[0], goal[1]), out = [goal]; if (f.prev[g] >= 0) { let k = g; while (k !== f.s) { k = f.prev[k]; if (k !== f.s) out.push([(k % GW + .5) * CS, ((k / GW | 0) + .5) * CS]); } } BOT.path = out.reverse(); BOT.act = act; BOT.goal = goal;
   }
@@ -1523,7 +1532,7 @@ function updPlayer(dt) {
     if (!P.spin && !P.act) { let da = Math.atan2(dx, dz) - P.rot; /* build 0093: mid-attack the hero keeps facing the target and walks on */ while (da > Math.PI) da -= 6.2832; while (da < -Math.PI) da += 6.2832; P.rot += da * Math.min(1, dt * 18); }
     const ox = P.x, oz = P.z, mx = dx / d * st, mz = dz / d * st; if (P.navTo && !blocked(P.x + mx, P.z + mz, .55)) { P.x += mx; P.z += mz; } else moveEnt(P, mx, mz, .55); let moved = Math.hypot(P.x - ox, P.z - oz); /* build 0071: a clear diagonal step is taken whole, so the hero does not catch on corners */
     if (moved < st * .5 && !P.navTo) { const ccx = (Math.floor(P.x / CS) + .5) * CS, ccz = (Math.floor(P.z / CS) + .5) * CS; if (Math.abs(dx) > Math.abs(dz)) moveEnt(P, 0, Math.sign(ccz - P.z) * Math.min(st, Math.abs(ccz - P.z)), .55); else moveEnt(P, Math.sign(ccx - P.x) * Math.min(st, Math.abs(ccx - P.x)), 0, .55); moved = Math.hypot(P.x - ox, P.z - oz); }
-    if (moved < st * .15) { NAV.stuck += dt; if (P.move && !IN.lmb && NAV.stuck > 1.2) { P.move = null; NAV.stuck = 0; } } else { NAV.stuck = Math.max(0, NAV.stuck - dt); P.moving = true; P.walk += moved * 1.5; const sn = Math.floor(P.walk / Math.PI); if (sn !== P.stepN) { P.stepN = sn; SFX.play('step'); } }
+    if (moved < st * .15) { NAV.stuck += dt; if (P.move && !IN.lmb && NAV.stuck > 2) { P.move = null; NAV.stuck = 0; } } else { NAV.stuck = Math.max(0, NAV.stuck - dt); P.moving = true; P.walk += moved * 1.5; const sn = Math.floor(P.walk / Math.PI); if (sn !== P.stepN) { P.stepN = sn; SFX.play('step'); } } /* build 0175: a click-to-move that is still working its way round an obstacle gets 2 s before it is given up on, not 1.2 s */
   }
 }
 // ---- skill choices ----
@@ -2886,7 +2895,7 @@ function drawWorld() {
       for (let k = 0; k < (lo ? 5 : 10); k++) { const ph = (t * .3 + k * .137) % 1, an = k * 1.9 + t * .2, r = 2 + Math.sin(k * 3.1) * .7;
         GLX.obj('glow', 'sphere', X + Math.cos(an) * r, .5 + ph * 4.5, Z0 + Math.sin(an) * r * .6, 0, .07, .07, .07, cA, 2.4, (1 - ph) * .9); }
       if (H) GLX.obj('glow', 'ring', X, .5, Z0, t, 6.8 + pulse * .4, 1, 6.8 + pulse * .4, cC, 1.6, .7, -1); // pointed at: a bright ring says it can be clicked or tapped
-      GLX.halo(X, gy, Z0 + .4, 7 + hov * 2, cB, .2 + hov * .1); GLX.light(X, 2.6, Z0 + 1, 15, mix(cA, cB, .35), 1.15 + hov * .6, 5);
+      GLX.halo(X, gy, Z0 + .4, 7 + hov * 2, cB, .2 + hov * .1); GLX.light(X, 2.6, Z0 + 1, 15, mix(cA, cB, .35), 1.15 + hov * .6, 5); GLX.obj('glow', 'cyl', X, 7, Z0, 0, .5, 14, .5, cA, 1.2, .13 + pulse * .05); GLX.obj('glow', 'cyl', X, 7, Z0, 0, .18, 14, .18, cC, 2, .3); /* build 0175: a pillar of light over the gate, so it is visible above the trees from across the floor */
     }
   }
   for (const d of G.drops) {
