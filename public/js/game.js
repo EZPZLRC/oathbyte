@@ -959,11 +959,12 @@ function altarOffer(i) { const h = G.hero, it = h.inv[i]; if (!it) return 0; if 
   SFX.play('shrine'); if (G.zone) { const al = G.zone.objs.find(o => o.kind === 'altar'); if (al) { ring(al.x, al.z, 0, 5, .6, 0xff7a2a); burst(al.x, 2.2, al.z, 0xff9a3a, 18 + v * 2, 6); } } saveGame(); return v; }
 function altarUpgrade(sel, ember) {
   const h = G.hero, it = typeof sel === 'string' ? h.eq[sel] : h.inv[sel]; if (!it || (it.up || 0) >= MAX_UP) return false; const c = upCost(it);
+  if (!isFinite(c.shards) || !isFinite(c.gold)) return false; /* build 0175: a cost that is not a number must never touch the purse (play test: one +1 forge took gold but no shards, and no static path in 0174 explains it) */
   if (ember) { if ((h.ember || 0) < EMBER_UP) { hint('Not enough Ember yet.'); return false; } } else if ((h.shards || 0) < c.shards || h.gold < c.gold) { hint('Not enough shards or gold.'); return false; }
   const lines = () => (it.dmg ? ['Damage ' + it.dmg[0] + '\u2013' + it.dmg[1]] : []).concat(it.armor ? ['Armor ' + it.armor] : []).concat(it.aff.map(a => statText(a.k, a.v))), was = lines();
   const p = upPreview(it); if (ember) h.ember -= EMBER_UP; else { h.shards -= c.shards; h.gold -= c.gold; } if (p.dmg) it.dmg = p.dmg; if (p.armor) it.armor = p.armor; it.aff = p.aff; it.up = (it.up || 0) + 1; it.name = it.name.replace(/ \+\d$/, '') + ' +' + it.up; const mid = lines(), lucky = forgeRoll(it), now = lines(); if (lucky) hint('Lucky forging: ' + lucky + '.');
   /* build 0112 (play test: the lucky roll was invisible): remember what this forging changed, line by line, so the Altar can show it. The numbers are the same as before */
-  G.lastForge = { it, up: it.up, lucky, rows: now.map((t, k) => ({ from: was[k], to: t, luck: t !== mid[k] })), t: typeof performance !== 'undefined' ? performance.now() : 0 };
+  G.lastForge = { it, up: it.up, lucky, cost: ember ? { ember: EMBER_UP } : { shards: c.shards, gold: c.gold }, rows: now.map((t, k) => ({ from: was[k], to: t, luck: t !== mid[k] })), t: typeof performance !== 'undefined' ? performance.now() : 0 };
   if (typeof sel === 'string') computeStats(); SFX.play('level'); G.shake = .6; if (G.zone) { const al = G.zone.objs.find(o => o.kind === 'altar'); if (al) { ring(al.x, al.z, 0, 12, 1, 0xffb03a); ring(al.x, al.z, 0, 7, .7, 0xfff0c0); burst(al.x, 2, al.z, 0xffb03a, 70, 12); } } saveGame(); return true;
 }
 // build 0105: on top of the fixed boost, each forging gives one random line an extra 1 to 5% (at least +1 only where 5% of the line is worth a whole point)
