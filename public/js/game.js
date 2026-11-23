@@ -1486,10 +1486,10 @@ function updPlayer(dt) {
   if (P.spin) { const sp = P.spin; sp.t -= dt; sp.tk -= dt; if (sp.tk <= 0) { sp.tk = sp.sk.tick / ((1 + s.aspd / 100) * aspdK()); areaHit(P.x, P.z, sp.sk.r * (1 + s.area / 100), sp.sk); SFX.play('whirl'); } if (sp.t <= 0) P.spin = null; }
   if (P.act) { const a = P.act; a.t += dt; P.swing = a.t / a.dur; if (!a.fired && a.t >= a.fireAt) { a.fired = true; fireSkill(a); } if (a.t >= a.dur) P.act = null; } /* build 0093 (Lee): heroes keep walking while an attack or skill plays; the legs run and the arms swing */
   if (G.auto && botStep(dt)) return;
-  if ((IN.rmb && h.bar[1]) || (IN.keys.q && h.bar[2]) || (IN.keys.w && h.bar[3])) goalDone('skill'); /* build 0097 (Lee): pressing a skill counts for First Steps even mid-swing */
-  if (!P.act) void ((IN.rmb && tryCast(1)) || (IN.keys.q && tryCast(2)) || (IN.keys.w && tryCast(3))); /* build 0093: a skill no longer stops the hero where they stand */
+  if ((IN.rmb && h.bar[1]) || (IN.keys.q && h.bar[2]) || (IN.keys.e && h.bar[3])) goalDone('skill'); /* build 0097 (Lee): pressing a skill counts for First Steps even mid-swing */ /* build 0175: WASD moves now, so the third skill slot is on E */
+  if (!P.act) void ((IN.rmb && tryCast(1)) || (IN.keys.q && tryCast(2)) || (IN.keys.e && tryCast(3))); /* build 0093: a skill no longer stops the hero where they stand */
   // thumb joystick + attack buttons: aim at the nearest foe by itself; a melee button held with the stick at rest walks you into reach
-  { const K = IN.keys, kx = (K.arrowright ? 1 : 0) - (K.arrowleft ? 1 : 0), kz = (K.arrowdown ? 1 : 0) - (K.arrowup ? 1 : 0); if (kx || kz) { const l = Math.hypot(kx, kz); IN.joy.on = true; IN.joy.x = kx / l; IN.joy.z = kz / l; IN.joy.kb = true; } else if (IN.joy.kb) { IN.joy.kb = false; IN.joy.on = false; IN.joy.x = IN.joy.z = 0; } } // arrow keys steer like the thumb stick
+  { const K = IN.keys, kx = (K.arrowright || K.d ? 1 : 0) - (K.arrowleft || K.a ? 1 : 0), kz = (K.arrowdown || K.s ? 1 : 0) - (K.arrowup || K.w ? 1 : 0); if (kx || kz) { const l = Math.hypot(kx, kz); IN.joy.on = true; IN.joy.x = kx / l; IN.joy.z = kz / l; IN.joy.kb = true; } else if (IN.joy.kb) { IN.joy.kb = false; IN.joy.on = false; IN.joy.x = IN.joy.z = 0; } } // WASD and arrow keys steer like the thumb stick (build 0175: WASD was never wired up, only the arrows steered)
   const jx = IN.joy.x, jz = IN.joy.z, jm = IN.joy.on ? Math.hypot(jx, jz) : 0; let chase = null;
   // auto-cast: skills switched to auto fire by themselves at the nearest foe, only while foes are near
   if (h.autoPot && !P.dead && P.stats && P.hp < P.stats.maxLife * .5 && (P.fl === undefined || P.fl > 0) && !(P.flaskT > 0)) useFlask();
@@ -1506,8 +1506,8 @@ function updPlayer(dt) {
   if ((IN.lmb || IN.lmbFresh) && IN.joy.kb && jm >= .18 && !G.hoverObj && !P.pickNow && !G.hoverPet) { IN.lmbFresh = false; if (!P.act) { const e = G.hover && G.hover.alive ? G.hover : null; tryCast(0, e ? e.x : IN.gx, e ? e.z : IN.gz); } } /* build 0095 (Lee: cast spells while moving): steering with the arrow keys, a left click attacks or casts at the cursor and the hero keeps walking */
   else if (IN.lmb || IN.lmbFresh) {
     if (IN.shift) { P.atk = P.move = P.inter = P.pick = null; IN.lmbFresh = false; tryCast(0); return; }
-    if (IN.lmbFresh) { IN.lmbFresh = false; if (G.hoverPet && !P.pickNow) { petSellAll(); /* build 0129: clicking the pet takes the whole bag too */ } else if (P.pickNow) { P.pick = P.pickNow; P.pickNow = null; P.atk = P.inter = P.move = null; } else if (G.hoverObj) { P.inter = G.hoverObj; P.gateGo = (G.hoverObj.kind === 'portal' || G.hoverObj.kind === 'pback') ? G.hoverObj : null; P.atk = P.move = P.pick = null; } else if (G.hover) { P.atk = G.hover; P.inter = P.move = P.pick = null; } else { P.atk = P.inter = P.pick = null; P.move = [IN.gx, IN.gz]; } }
-    else if (!P.atk && !P.inter && !P.pick) { if (G.hover) P.atk = G.hover; else P.move = [IN.gx, IN.gz]; }
+    if (IN.lmbFresh) { IN.lmbFresh = false; if (G.hoverPet && !P.pickNow) { petSellAll(); /* build 0129: clicking the pet takes the whole bag too */ } else if (P.pickNow) { P.pick = P.pickNow; P.pickNow = null; P.atk = P.inter = P.move = null; } else if (G.hoverObj) { P.inter = G.hoverObj; P.gateGo = (G.hoverObj.kind === 'portal' || G.hoverObj.kind === 'pback') ? G.hoverObj : null; P.atk = P.move = P.pick = null; } else if (G.hover) { P.atk = G.hover; P.inter = P.move = P.pick = null; } else { P.atk = P.inter = P.pick = null; P.move = walkableNear(IN.gx, IN.gz); } }
+    else if (!P.atk && !P.inter && !P.pick) { if (G.hover) P.atk = G.hover; else P.move = walkableNear(IN.gx, IN.gz); }
   }
   let tx, tz, spK = 1;
   if (P.atk && !P.atk.alive) { P.atk = null; }

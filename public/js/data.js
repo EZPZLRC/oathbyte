@@ -82,7 +82,7 @@ const POWERS = {
   phoenix: { n: 'Emberheart', d: 'Cheat death once every 60 seconds, restoring full life.', s: { cheat: 1, lifePct: 12 }, slots: ['chest', 'amulet', 'helm'] }
 };
 
-const SLOT_LV = [1, 1, 2, 4, 7, 12], SLOT_KEY = ['LMB', 'RMB', 'Q', 'W', 'E', 'R'];
+const SLOT_LV = [1, 1, 2, 4, 7, 12], SLOT_KEY = ['LMB', 'RMB', 'Q', 'E', 'E', 'R']; /* build 0175: WASD moves now, so the third skill slot moved from W to E */
 const SKILLS = {
   cleave: { n: 'Cleave', lv: 1, i: '⚔', type: 'melee', el: 'phys', m: 1.0, range: 3.4, arc: 2.0, basic: 1, gen: 5, d: 'Sweep your weapon in a wide arc, striking every enemy in front of you.' },
   bash: { n: 'Bash', i: '⚒', type: 'melee', el: 'phys', m: 1.6, range: 3.3, arc: .9, basic: 1, gen: 9, lv: 2, d: 'A heavy blow on one target in front of you. Builds Fury quickly.' },
