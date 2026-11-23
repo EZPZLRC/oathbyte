@@ -2951,10 +2951,10 @@ function drawWorld() {
   }
   // weather by region (build 0020): rain in the woods, falling ash over lava, heavy snow on the ice, rising motes in the void
   if (GLX.env.q > 0 && G.zone && G.set.weather !== false && !G.inTown) {
-    const wx = G.zone.th.wx, t = G.time; if (wx) { const n = 5, cs = 4, cx = Math.floor(P.x / cs), cz = Math.floor(P.z / cs);
+    const wx = G.zone.th.wx, t = G.time; if (wx) { const n = wx === 'rain' ? 4 : 5, cs = 4, cx = Math.floor(P.x / cs), cz = Math.floor(P.z / cs); /* build 0175 (play test: 24-34 fps in the rain forest): rain falls on a smaller grid, 2 drops a cell instead of 3, about half the rain draws */
       const wc = col(wx === 'rain' ? 0xb8d0e8 : wx === 'ash' ? 0x8a7a70 : wx === 'snow' ? 0xf2f8ff : 0xb890ff);
       for (let ix = -n; ix <= n; ix++) for (let iz = -n; iz <= n; iz++) { const gx = cx + ix, gz = cz + iz; let sd = ((gx * 83492791) ^ (gz * 2971215073)) >>> 0; const r = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
-        for (let q = 0; q < (wx === 'rain' ? 3 : 2); q++) { const x = gx * cs + r() * cs, z = gz * cs + r() * cs, ph = r() * 20, sp = .8 + r() * .4;
+        for (let q = 0; q < 2; q++) { const x = gx * cs + r() * cs, z = gz * cs + r() * cs, ph = r() * 20, sp = .8 + r() * .4;
           if (wx === 'rain') { const H = 9, y = H - ((t * 16 * sp + ph * 3) % H); GLX.part('glow', 'box', IDM, x - y * .12, y, z + y * .05, .12, 0, 0, 0, 0, 0, .025, .55, .025, wc, .8, .32); if (y < .9) GLX.obj('glow', 'ring', x, .06, z, 0, .2 + (.9 - y) * .5, 1, .2 + (.9 - y) * .5, wc, .6, (y / .9) * .35, -1); }
           else if (wx === 'ash') { const H = 8, y = H - ((t * 1.1 * sp + ph) % H); GLX.obj('glow', 'gem', x + Math.sin(t * .8 + ph) * .9, y, z + Math.cos(t * .6 + ph) * .7, t + ph, .05, .03, .05, q ? wc : col(0xff6a2a), q ? .2 : 2, q ? .55 : .8); }
           else if (wx === 'snow') { const H = 8, y = H - ((t * 1.6 * sp + ph) % H); GLX.obj('glow', 'sphere', x + Math.sin(t * 1.3 * sp + ph) * .7, y, z + Math.cos(t + ph) * .4 + y * .1, 0, .06, .06, .06, wc, .8, .85); }

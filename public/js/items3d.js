@@ -189,9 +189,9 @@ let pumping = false;
 function pump() {
   if (pumping || !queue.length) return; pumping = true;
   const step = async () => { const t0 = performance.now();
-    while (queue.length && performance.now() - t0 < 8) { const job = queue.shift(); queued.delete(job.key); if (cache.has(job.key)) continue; let url = null; try { url = await drawIcon(job); } catch (e) { url = null; }
+    while (queue.length && performance.now() - t0 < 6) { const job = queue.shift(); queued.delete(job.key); if (cache.has(job.key)) continue; let url = null; try { url = await drawIcon(job); } catch (e) { url = null; } /* build 0175 (play test: 17-38 fps with panels open in town): the icon queue works in shorter bursts with longer gaps, so the main loop keeps most of each frame */
       cache.set(job.key, url); for (const el of document.querySelectorAll('[data-m3="' + CSS.escape(job.key) + '"]')) { if (!url) { el.classList.add('m3f'); continue; } const im = new Image(); im.className = 'm3 in'; im.alt = ''; im.draggable = false; im.src = url; el.replaceWith(im); } }
-    if (queue.length) setTimeout(step, 4); else pumping = false; };
+    if (queue.length) setTimeout(step, 12); else pumping = false; };
   setTimeout(step, 0);
 }
 // what ui.js asks for: the picture if it is ready, or { key } and it gets drawn soon (the slot stays empty meanwhile, and the picture fades in; if it can't be drawn, the flat icon shows)
@@ -220,7 +220,7 @@ function draw(dt) {
 function loop(t) {
   const tip = document.getElementById('tip');
   if (!sc.cv.isConnected || !tip || tip.classList.contains('hide') || document.hidden) { sc.raf = 0; return; }
-  const dt = Math.min(.1, (t - sc.last) / 1000); if (dt >= 1 / 31) { sc.last = t; try { draw(dt); } catch (e) { sc.raf = 0; return; } } sc.raf = requestAnimationFrame(loop);
+  const dt = Math.min(.1, (t - sc.last) / 1000); if (dt >= 1 / 15) { sc.last = t; try { draw(dt); } catch (e) { sc.raf = 0; return; } } sc.raf = requestAnimationFrame(loop); /* build 0175: the tooltip preview turns slowly enough that 15 frames a second is plenty; 31 was spending frames while the bag was open */
 }
 
 // a quick check that this device can draw at all; if not, ui.js shows the flat icons

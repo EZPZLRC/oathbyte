@@ -318,8 +318,7 @@ function forgeBox(it) { const F = G.lastForge; if (!F || F.it !== it) return '';
   function renderSkl() {
     const h = G.hero, el = $('skl'), open = talOpen(h), tal = sklTab === 'talents', sc = () => (tal && el.querySelector('.tl-body')) || el, sy = el.dataset.shown === sklTab ? sc().scrollTop : 0;
     el.innerHTML = `<div class="ph"><div class="sk-tabs" role="tablist"><button type="button" role="tab" data-tab="skills" class="${tal ? '' : 'on'}" aria-selected="${!tal}">Skills</button><button type="button" role="tab" data-tab="talents" class="${tal ? 'on' : ''}" aria-selected="${tal}">Talents${open ? `<span class="tnew">${open}</span>` : ''}</button></div><button class="xb" data-x="skl" aria-label="Close">×</button></div>` + (tal ? talHtml(h) : sklHtml(h));
-    el.classList.toggle('tl-wide', tal); el.dataset.shown = sklTab; sc().scrollTop = sy; talBusy();
-    if (tal && open && !sy) { const f = el.querySelector('.tl-row.open'); if (f) setTimeout(() => { try { f.scrollIntoView({ block: 'nearest' }); } catch (_) { } }, 0); }
+    el.classList.toggle('tl-wide', tal); el.dataset.shown = sklTab; sc().scrollTop = sy; talBusy(); /* build 0175 (play test: the panel opened mid-list with the first rows clipped off): it always opens at the top; tap a circle in the strip to jump to a row */
   }
   function sklSetTab(t) { if (t === sklTab) return; sklTab = t; try { localStorage.setItem('obSklTab', t); } catch (_) { } renderSkl(); sklIn(); }
   function sklIn() { const p = $('skl').querySelector('.tl-pane,.list'); if (p) { p.classList.remove('tl-in'); void p.offsetWidth; p.classList.add('tl-in'); } }
