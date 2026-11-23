@@ -1418,6 +1418,9 @@ function navStep(tx, tz, dt) { if (!G.zone || !G.zone.cell) return [tx, tz]; nav
   const redo = !NAV.pts || NAV.stuck > .45 || (key !== NAV.key && NAV.t <= .35) || (NAV.t <= 0 && NAV.pts.length > 1); /* a moving target (mouse held) is re-routed a few times a second, not every frame */
   if (redo) { const st = NAV.stuck > .45; NAV.t = .5; NAV.stuck = 0; NAV.key = key; NAV.pts = !st && navClear(P.x, P.z, tx, tz) ? [[tx, tz]] : navFind(tx, tz) || [[tx, tz]]; if (st && NAV.pts.length) NAV.hold = .6; } NAV.hold = Math.max(0, (NAV.hold || 0) - dt);
   const pts = NAV.pts; while (pts.length > 1 && (Math.hypot(pts[0][0] - P.x, pts[0][1] - P.z) < .25 || (!NAV.hold && navClear(P.x, P.z, pts[1][0], pts[1][1])))) pts.shift(); if (pts.length === 1 && navClear(P.x, P.z, tx, tz)) { pts[0][0] = tx; pts[0][1] = tz; } return pts[0]; }
+/* build 0175 (play test: a click on far ground stopped after a short walk): a click that lands inside a wall, a tree or a stall is pulled to the nearest
+   ground the hero can stand on, instead of sending the hero at a wall until the stuck timer gives up. */
+function walkableNear(x, z) { if (!blocked(x, z, .6)) return [x, z]; for (let r = 1; r <= 3; r += .5) for (let k = 0; k < 12; k++) { const a = k / 12 * 6.2832, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (!blocked(px, pz, .6)) return [px, pz]; } return [x, z]; }
 const cellOf = (x, z) => clamp(Math.floor(z / CS), 0, GW - 1) * GW + clamp(Math.floor(x / CS), 0, GW - 1);
 function los(x1, z1, x2, z2) { const d = Math.hypot(x2 - x1, z2 - z1), n = Math.ceil(d / .4); for (let i = 1; i < n; i++) { const t = i / n; if (cellAt(x1 + (x2 - x1) * t, z1 + (z2 - z1) * t)) return false; } return true; }
 /* build 0104 (Lee: the boss needs line of sight to hurt you, no cheap shots over walls): a blow from a floor boss or the world boss only lands if a wall is not between it and you. Its shots already stop at walls */
@@ -1524,7 +1527,7 @@ function updPlayer(dt) {
   else if (chase) { P.atk = P.inter = P.pick = P.move = null; tx = chase.x; tz = chase.z; }
   else if (P.atk) { const e = P.atk, d = Math.hypot(e.x - P.x, e.z - P.z); if (d <= (talSk(G.hero.bar[0]) || SKILLS.cleave).range * .78 + e.r) { if (!P.act) { tryCast(0, e.x, e.z); if (!IN.lmb) P.atk = null; } return; } /* build 0093: a click on a foe mid-skill waits for the skill, then swings */ tx = e.x; tz = e.z; }
   else if (P.pick) { if (!G.drops.includes(P.pick)) P.pick = null; else { if (Math.hypot(P.pick.x - P.x, P.pick.z - P.z) < 2.3) { pickup(P.pick); P.pick = null; return; } tx = P.pick.x; tz = P.pick.z; } }
-  else if (P.inter) { const o = P.inter; if (Math.hypot(o.x - P.x, o.z - P.z) < (P.gateGo === o ? 3.4 : 2.6)) { interact(o); P.inter = null; return; } tx = o.x; tz = o.z; }
+  else if (P.inter) { const o = P.inter; if (Math.hypot(o.x - P.x, o.z - P.z) < (P.gateGo === o ? 4.5 : 2.6)) { interact(o); P.inter = null; return; } tx = o.x; tz = o.z; } /* build 0175: the gate fires from a little farther out, so a click on it works even when the path stops short */
   else if (P.move) { tx = P.move[0]; tz = P.move[1]; if (Math.hypot(tx - P.x, tz - P.z) < .3) { P.move = null; tx = undefined; } }
   if (tx !== undefined && jm < .18) { const w = navStep(tx, tz, dt); P.navTo = w; tx = w[0]; tz = w[1]; } else { NAV.key = -1; NAV.pts = null; P.navTo = null; }
   if (tx !== undefined) {
