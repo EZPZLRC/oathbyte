@@ -80,7 +80,7 @@ const NET = (() => {
       case 'join': if (m.name !== N.me && N.quiet('j' + m.name)) UI.chat('', txt(m.name, 16) + ' joined the party.', 's'); break;
       case 'leave': delete N.peers[m.id]; if (m.name !== N.me && N.quiet('l' + m.name)) UI.chat('', txt(m.name, 16) + ' left the party.', 's'); break;
       case 'players': N.names = {}; N.cls = {}; N.fd = {}; for (const p of m.list) { N.names[p.id] = txt(p.name, 16); N.cls[p.id] = CLASSES[p.cls] ? p.cls : 'warden'; N.fd[p.id] = !!p.f; if (N.peers[p.id]) { N.peers[p.id].name = N.names[p.id]; N.peers[p.id].cls = N.cls[p.id]; } } N.count = m.list.length; break;
-      case 'give': { const it = cleanItem(m.item); if (!it) break; if (addItem(it)) { hint(txt(m.n, 16) + (m.back ? ' could not carry it, so it came back: ' : ' gave you ') + it.name + '.'); UI.invDirty = true; saveGame(); } else if (!m.back) N.send({ t: 'give', to: m.from, item: m.item, back: true }); break; }
+      case 'give': { const it = cleanItem(m.item); if (!it) break; if (addItem(it, undefined, true)) { hint(txt(m.n, 16) + (m.back ? ' could not carry it, so it came back: ' : ' gave you ') + it.name + '.'); UI.invDirty = true; saveGame(); } else if (!m.back) N.send({ t: 'give', to: m.from, item: m.item, back: true }); break; }
     }
   }
   N.status = async () => { try { if (!/^https?:$/.test(location.protocol)) return null; const r = await fetch(CG.url('oathbyte-server'), CG.opt()); if (!r.ok) return null; const j = await r.json(); return j && j.oathbyte ? j : null; } catch (e) { return null; } };
