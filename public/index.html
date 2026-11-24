@@ -83,7 +83,12 @@ input{font:inherit;color:#f3ead6;background:#14110c;border:1px solid #8a6a3a;bor
 .it.r0{background:radial-gradient(circle at 50% 38%,#3a3733 0,#1c1a18 62%,#0c0b0a 100%);border-color:#5a5650;color:#cfcbc2;box-shadow:inset 0 0 0 1px #0008,inset 0 1px 0 #ffffff12}.it.r1{background:radial-gradient(circle at 50% 38%,#2a3448 0,#151a24 62%,#0a0c10 100%);border-color:#5878d8;color:#a8c0ff;box-shadow:inset 0 0 10px #4a6ad855,inset 0 1px 0 #ffffff12}.it.r2{background:radial-gradient(circle at 50% 38%,#3e3626 0,#1e1a12 62%,#0e0c08 100%);border-color:#d8b030;color:#ffe890;box-shadow:inset 0 0 10px #d8b03050,inset 0 1px 0 #ffffff12}.it.r3{background:radial-gradient(circle at 50% 38%,#43301f 0,#21160e 62%,#0f0a06 100%);border-color:#ff8a2a;color:#ffc890;box-shadow:inset 0 0 12px #ff8a2a55,inset 0 1px 0 #ffffff12}
 .it .lk{position:absolute;left:3px;bottom:2px;width:9px;height:11px;filter:drop-shadow(0 1px 1px #000)}.it .lv{position:absolute;right:2px;bottom:0;font-size:9px;color:#e8e2d4;text-shadow:0 1px 2px #000}.it.up::after{content:"▲";position:absolute;left:2px;top:0;font-size:9px;color:#5aff7a}.it:hover{filter:brightness(1.25)}
 .it .nm{display:none}
-.it.nm .nm{display:block;position:absolute;left:0;right:0;bottom:0;padding:5px 2px 1px;font-size:8px;line-height:1.1;font-weight:600;text-align:center;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,.78))}
+.it.nm .nm{display:block;position:absolute;left:0;right:0;bottom:0;padding:5px 15px 1px 3px;font-size:8px;line-height:1.1;font-weight:600;text-align:center;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,.78))}
+/* build 0177 (play test on Lee's laptop: a bag tile's name ran into its item level, "Radiant Ir10"): the name stops short of the level, and the lock sits just above the name */
+@media (min-width:761px){.it.nm .lk{bottom:13px}}body.isz1 .it.nm .nm{padding-right:18px}body.isz2 .it.nm .nm{padding-right:21px}
+/* build 0177 (play test: "World boss: The Deepfire Colossus" landed on the hero, its second line hid behind him, and the title ran under the quest box): banners sit higher (on a computer between the left and right columns, on a phone just under the quest line), with a soft backing behind the small line */
+@media (min-width:761px) and (min-height:501px){#banner{top:11%;left:230px;right:230px}#banner .b1{font-size:clamp(22px,2.6vw,38px)}#banner .b2{display:inline-block;padding:2px 10px;border-radius:6px;background:rgba(0,0,0,.38)}}
+@media (orientation:portrait) and (max-width:760px){#banner{top:140px}#banner .b2{display:inline-block;font-size:12px;margin-top:4px;padding:2px 8px;border-radius:6px;background:rgba(0,0,0,.38)}}
 /* build 0105: forged items carry an ember glow that builds from +1 to +5 */.it.f1::before,.it.f2::before,.it.f3::before,.it.f4::before,.it.f5::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:0}.it.f1::before{box-shadow:inset 0 -6px 8px -4px #ff7a2a66}.it.f2::before{box-shadow:inset 0 -8px 10px -4px #ff7a2a88,0 0 3px #ff8a3a55}.it.f3::before{box-shadow:inset 0 -10px 12px -4px #ff7a2aaa,0 0 5px #ff8a3a77;border:1px solid #ff9a4a55}.it.f4::before{box-shadow:inset 0 -12px 14px -4px #ff7a2acc,0 0 7px #ff8a3a99;border:1px solid #ffa85a88;animation:fgl 2.4s ease-in-out infinite}.it.f5::before{box-shadow:inset 0 -14px 16px -3px #ff7a2aee,inset 0 0 8px #ffb04a66,0 0 10px #ff8a3acc;border:1px solid #ffc070;animation:fgl 1.8s ease-in-out infinite}@keyframes fgl{50%{opacity:.6}}.it.f1 svg,.it.f2 svg,.it.f3 svg,.it.f4 svg,.it.f5 svg{position:relative;z-index:1}@media (prefers-reduced-motion:reduce){.it.f4::before,.it.f5::before{animation:none}}.odds .lucky{color:#ffb060;font-size:.92em;margin-top:2px}
 
 .ghost{position:fixed;width:40px;height:40px;pointer-events:none;z-index:60;opacity:.9}
@@ -552,9 +557,9 @@ body.isz1:not(.tj):not(:has(#town:not(.hide))) #inv{--c:44px} /* the middle item
 /* phones: story dialogs sit below the top row of buttons and the map */
 @media (max-width:760px){#folk{top:118px}}
 </style>
-<link rel="stylesheet" href="css/oathbyte.css?v=0174">
-<link rel="stylesheet" href="css/keyart.css?v=0174">
-<link rel="stylesheet" href="css/advisor.css?v=0174">
+<link rel="stylesheet" href="css/oathbyte.css?v=0177">
+<link rel="stylesheet" href="css/keyart.css?v=0177">
+<link rel="stylesheet" href="css/advisor.css?v=0177">
 </head>
 <body>
 <canvas id="gl"></canvas><canvas id="ov"></canvas>
@@ -715,19 +720,19 @@ body.isz1:not(.tj):not(:has(#town:not(.hide))) #inv{--c:44px} /* the middle item
  body.tj #build{left:auto!important;right:6px!important;bottom:calc(3px + env(safe-area-inset-bottom))!important;white-space:pre-line;text-align:right;font-size:9.5px!important;line-height:1.2}
 }
 </style>
-<link rel="stylesheet" href="css/menus.css?v=0174"><!-- build 0166: Lee's menu and screen picks -->
-<link rel="stylesheet" href="css/hud.css?v=0174"><!-- build 0174: arc gauges for life and resource -->
-<script src="js/move.js?v=0174"></script>
-<script src="js/models.js?v=0174"></script>
-<script src="js/gl.js?v=0174"></script>
-<script src="js/data.js?v=0174"></script>
-<script src="js/cg.js?v=0174"></script>
-<script src="js/icons.js?v=0174"></script>
-<script src="js/game.js?v=0174"></script>
-<script src="js/fxlook.js?v=0174"></script>
-<script src="js/enemylook.js?v=0174"></script>
-<script src="js/net.js?v=0174"></script>
-<script src="js/ui.js?v=0174"></script>
-<script src="js/advisor.js?v=0174"></script>
+<link rel="stylesheet" href="css/menus.css?v=0177"><!-- build 0166: Lee's menu and screen picks -->
+<link rel="stylesheet" href="css/hud.css?v=0177"><!-- build 0174: arc gauges for life and resource -->
+<script src="js/move.js?v=0177"></script>
+<script src="js/models.js?v=0177"></script>
+<script src="js/gl.js?v=0177"></script>
+<script src="js/data.js?v=0177"></script>
+<script src="js/cg.js?v=0177"></script>
+<script src="js/icons.js?v=0177"></script>
+<script src="js/game.js?v=0177"></script>
+<script src="js/fxlook.js?v=0177"></script>
+<script src="js/enemylook.js?v=0177"></script>
+<script src="js/net.js?v=0177"></script>
+<script src="js/ui.js?v=0177"></script>
+<script src="js/advisor.js?v=0177"></script>
 <div id="mtags"></div></body>
 </html>
